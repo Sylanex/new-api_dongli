@@ -1,0 +1,104 @@
+name: Dongli Image
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        required: true
+        type: string
+      release_tag:
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: dongli-image-${{ inputs.release_tag || 'shadow' }}
+  cancel-in-progress: ${{ inputs.release_tag == '' }}
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+      - name: Compute image and version
+        id: meta
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          revision=$(git rev-parse HEAD)
+          image="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/new-api"
+          if [[ -n "$RELEASE_TAG" ]]; then
+            [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-rc\.[0-9]+)?-dongli\.[0-9]+$ ]]
+            git fetch origin team
+            git merge-base --is-ancestor "$revision" origin/team
+            [[ "$(git rev-parse "${RELEASE_TAG}^{commit}")" == "$revision" ]]
+            version="$RELEASE_TAG"
+            image_tag="$RELEASE_TAG"
+          else
+            base_version=$(tr -d '\r\n' < VERSION)
+            version="${base_version}-dongli-shadow+${revision:0:12}"
+            image_tag="shadow-${revision}"
+          fi
+          printf '%s\n' "$version" > VERSION
+          {
+            echo "image=$image"
+            echo "revision=$revision"
+            echo "version=$version"
+            echo "tag=$image_tag"
+          } >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+      - uses: docker/login-action@c99871dec2022cc055c062a10cc1a1310835ceb4 # v4.3.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and publish exact revision
+        id: build
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.tag }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ steps.meta.outputs.revision }}
+            org.opencontainers.image.version=${{ steps.meta.outputs.version }}
+          cache-from: type=gha,scope=dongli-image
+          cache-to: type=gha,mode=max,scope=dongli-image
+      - name: Update shadow alias for the current team revision
+        if: inputs.release_tag == ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE: ${{ steps.meta.outputs.image }}
+          REVISION: ${{ steps.meta.outputs.revision }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          set -euo pipefail
+          current=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/team" --jq .object.sha)
+          if [[ "$current" == "$REVISION" ]]; then
+            docker buildx imagetools create --tag "${IMAGE}:shadow" "${IMAGE}@${DIGEST}"
+          else
+            echo "A newer team revision exists; the revision image is available by its SHA tag."
+          fi
+      - name: Image receipt
+        env:
+          IMAGE: ${{ steps.meta.outputs.image }}
+          IMAGE_TAG: ${{ steps.meta.outputs.tag }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+          REVISION: ${{ steps.meta.outputs.revision }}
+        run: |
+          {
+            echo "Image: ${IMAGE}:${IMAGE_TAG}"
+            echo "Digest: ${IMAGE}@${DIGEST}"
+            echo "Source commit: ${REVISION}"
+          } >> "$GITHUB_STEP_SUMMARY"

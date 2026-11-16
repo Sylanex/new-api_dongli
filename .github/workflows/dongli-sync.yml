@@ -1,0 +1,103 @@
+name: Dongli Upstream Sync
+
+on:
+  schedule:
+    - cron: '41 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: dongli-upstream-sync
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.merge.outputs.changed }}
+      candidate: ${{ steps.merge.outputs.candidate }}
+      base: ${{ steps.merge.outputs.base }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: team
+          fetch-depth: 0
+      - name: Prepare upstream release merge
+        id: merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          tag=$(gh api repos/QuantumNous/new-api/releases/latest --jq .tag_name)
+          [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.]+)?$ ]]
+          git remote add upstream https://github.com/QuantumNous/new-api.git
+          git fetch upstream main
+          git push origin FETCH_HEAD:refs/heads/main
+          git fetch upstream "refs/tags/$tag"
+          upstream_sha=$(git rev-parse 'FETCH_HEAD^{commit}')
+          git fetch origin team
+          base=$(git rev-parse origin/team)
+          if git merge-base --is-ancestor "$upstream_sha" "$base"; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+            echo "Team already contains upstream release $tag." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git checkout --detach "$base"
+          if ! git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' merge --no-ff -m "Merge upstream $tag" "$upstream_sha"; then
+            git diff --name-only --diff-filter=U > upstream-sync-conflicts.txt
+            git diff --binary > upstream-sync.patch
+            cat upstream-sync-conflicts.txt >> "$GITHUB_STEP_SUMMARY"
+            git merge --abort
+            exit 1
+          fi
+          candidate=$(git rev-parse HEAD)
+          branch="automation/upstream-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          git push origin "${candidate}:refs/heads/${branch}"
+          {
+            echo 'changed=true'
+            echo "candidate=$candidate"
+            echo "base=$base"
+          } >> "$GITHUB_OUTPUT"
+          echo "Candidate $candidate merges upstream release $tag." >> "$GITHUB_STEP_SUMMARY"
+      - name: Preserve merge conflict details
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: upstream-merge-conflicts
+          path: |
+            upstream-sync-conflicts.txt
+            upstream-sync.patch
+          if-no-files-found: ignore
+  checks:
+    needs: prepare
+    if: needs.prepare.outputs.changed == 'true'
+    uses: ./.github/workflows/dongli-ci.yml
+    with:
+      ref: ${{ needs.prepare.outputs.candidate }}
+  promote:
+    runs-on: ubuntu-latest
+    needs: [prepare, checks]
+    if: needs.prepare.outputs.changed == 'true'
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ needs.prepare.outputs.candidate }}
+          fetch-depth: 0
+      - name: Advance team after successful checks
+        env:
+          CANDIDATE: ${{ needs.prepare.outputs.candidate }}
+          EXPECTED_BASE: ${{ needs.prepare.outputs.base }}
+        run: |
+          set -euo pipefail
+          git fetch origin team
+          [[ "$(git rev-parse origin/team)" == "$EXPECTED_BASE" ]]
+          git push origin "${CANDIDATE}:refs/heads/team"
+  image:
+    needs: [prepare, promote]
+    if: needs.prepare.outputs.changed == 'true'
+    uses: ./.github/workflows/dongli-image.yml
+    with:
+      ref: ${{ needs.prepare.outputs.candidate }}
