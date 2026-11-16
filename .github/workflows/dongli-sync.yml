@@ -34,8 +34,12 @@ jobs:
           tag=$(gh api repos/QuantumNous/new-api/releases/latest --jq .tag_name)
           [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.]+)?$ ]]
           git remote add upstream https://github.com/QuantumNous/new-api.git
+          # The fork-sync API accepts contents:write and can mirror upstream
+          # workflow updates without storing a personal token in this repository.
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/merge-upstream" -f branch=main
+          git fetch origin main
           git fetch upstream main
-          git push origin FETCH_HEAD:refs/heads/main
+          [[ "$(git rev-parse origin/main)" == "$(git rev-parse FETCH_HEAD)" ]]
           git fetch upstream "refs/tags/$tag"
           upstream_sha=$(git rev-parse 'FETCH_HEAD^{commit}')
           git fetch origin team
