@@ -43,7 +43,7 @@ jobs:
             version="$RELEASE_TAG"
             image_tag="$RELEASE_TAG"
           else
-            base_version=$(tr -d '\r\n' < VERSION)
+            base_version=$(git describe --tags --match 'v[0-9]*' --exclude '*-dongli.*' --abbrev=0)
             version="${base_version}-dongli-shadow+${revision:0:12}"
             image_tag="shadow-${revision}"
           fi

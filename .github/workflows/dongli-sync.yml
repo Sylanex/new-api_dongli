@@ -40,8 +40,9 @@ jobs:
           git fetch origin main
           git fetch upstream main
           [[ "$(git rev-parse origin/main)" == "$(git rev-parse FETCH_HEAD)" ]]
-          git fetch upstream "refs/tags/$tag"
-          upstream_sha=$(git rev-parse 'FETCH_HEAD^{commit}')
+          git fetch upstream "refs/tags/$tag:refs/tags/$tag"
+          upstream_sha=$(git rev-parse "${tag}^{commit}")
+          git push origin "refs/tags/$tag:refs/tags/$tag"
           git fetch origin team
           base=$(git rev-parse origin/team)
           if git merge-base --is-ancestor "$upstream_sha" "$base"; then
