@@ -1,0 +1,27 @@
+name: Dongli Build
+
+on:
+  push:
+    branches: [team]
+    tags: ['v*-dongli.*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: dongli-build-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref_type != 'tag' }}
+
+jobs:
+  checks:
+    uses: ./.github/workflows/dongli-ci.yml
+    with:
+      ref: ${{ github.sha }}
+  image:
+    needs: checks
+    uses: ./.github/workflows/dongli-image.yml
+    with:
+      ref: ${{ github.sha }}
+      release_tag: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
