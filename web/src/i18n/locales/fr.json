@@ -7755,6 +7755,11 @@
     "Zhipu V4": "Zhipu V4",
     "Zoom": "Zoom",
     "By clicking sign in, you agree to our": "En cliquant sur se connecter, vous acceptez nos",
-    "By creating an account, you agree to our": "En créant un compte, vous acceptez nos"
+    "By creating an account, you agree to our": "En créant un compte, vous acceptez nos",
+    "Legacy credits": "Anciens crédits",
+    "Legacy usage": "Utilisation des anciens crédits",
+    "Verify the payment method and amount before completing this legacy order": "Vérifiez le mode de paiement et le montant avant de finaliser cette ancienne commande",
+    "Raw quota": "Quota brut",
+    "Current total = usage since the points cutover + remaining.": "Quota total actuel = utilisation depuis le passage aux points + quota restant."
   }
 }

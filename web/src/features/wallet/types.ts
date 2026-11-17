@@ -232,6 +232,7 @@ export interface UserWalletData {
   quota: number
   /** Total used quota */
   used_quota: number
+  legacy_used_quota?: number | null
   /** Total request count */
   request_count: number
   /** Affiliate quota (pending rewards) */
@@ -259,8 +260,12 @@ export interface TopupRecord {
   user_id: number
   /** Topup amount (quota) */
   amount: number
+  /** Actual raw quota credited by settlement, absent on older server versions. */
+  credited_quota?: number
   /** Payment amount (actual money paid) */
   money: number
+  /** Exact Epay checkout quote, when available. */
+  quoted_money?: string
   /** Trade/order number */
   trade_no: string
   /** Payment method type */

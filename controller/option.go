@@ -202,6 +202,12 @@ func UpdateOption(c *gin.Context) {
 		option.Value = fmt.Sprintf("%v", option.Value)
 	}
 	switch option.Key {
+	case "points_migration_setting.cutover_time", "points_migration_setting.legacy_quota_per_unit":
+		value, parseErr := strconv.ParseInt(option.Value.(string), 10, 64)
+		if parseErr != nil || value < 0 || (option.Key == "points_migration_setting.legacy_quota_per_unit" && value == 0) {
+			common.ApiErrorT(c, "Invalid parameters")
+			return
+		}
 	case "QuotaForInviter", "QuotaForInvitee":
 		if isPositiveOptionValue(option.Value.(string)) && !operation_setting.IsPaymentComplianceConfirmed() {
 			common.ApiErrorT(c, "Payment, redemption, subscription, and invitation reward features are disabled. The administrator must confirm compliance terms before enabling them.")

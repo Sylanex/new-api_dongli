@@ -407,7 +407,8 @@ export function buildAuditDetails(
     action,
     params,
     entry.success,
-    t
+    t,
+    entry.created_at
   )
   const operation = tokenOperation ?? quotaOperation
   const summaryParams: NonNullable<NonNullable<LogOtherData['op']>['params']> =

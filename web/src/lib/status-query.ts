@@ -92,6 +92,13 @@ export function mapStatusDataToConfig(
   }
 
   return {
+    pointsMigration: {
+      cutoverTime: toNumber(data.points_migration_cutover_time, 0),
+      legacyQuotaPerUnit: toNumber(
+        data.points_migration_legacy_quota_per_unit,
+        500000
+      ),
+    },
     systemName: (data.system_name as string | undefined) || DEFAULT_SYSTEM_NAME,
     logo: (data.logo as string | undefined) || DEFAULT_LOGO,
     footerHtml: data.footer_html as string | undefined,

@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next'
 
 import { IconBadge, type IconBadgeTone } from '@/components/ui/icon-badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { formatCumulativeQuota } from '@/lib/currency'
 import { formatQuota } from '@/lib/format'
 
 import type { UserWalletData } from '../types'
@@ -62,7 +63,10 @@ export function WalletStatsCard(props: WalletStatsCardProps) {
     },
     {
       label: t('Total Usage'),
-      value: formatQuota(props.user?.used_quota ?? 0),
+      value: formatCumulativeQuota(
+        props.user?.used_quota ?? 0,
+        props.user?.legacy_used_quota
+      ),
       description: t('Total consumed quota'),
       icon: BarChart3,
       tone: 'info',

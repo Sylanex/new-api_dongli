@@ -250,9 +250,10 @@ export function formatTimeStr(date: Date): string {
  * Format quota for usage logs with higher precision
  * Uses 6 decimal places to show very small costs accurately
  */
-export function formatLogQuota(quota: number): string {
+export function formatLogQuota(quota: number, recordedAt?: number): string {
   return formatQuotaWithCurrency(quota, {
     digitsLarge: 4,
+    recordedAt,
     digitsSmall: 6,
     abbreviate: false,
   })

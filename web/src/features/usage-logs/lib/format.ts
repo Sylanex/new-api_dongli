@@ -602,7 +602,8 @@ export function logTokenName(
  */
 export function renderAuditContent(
   other: LogOtherData | null | undefined,
-  t: (key: string, opts?: Record<string, unknown>) => string
+  t: (key: string, opts?: Record<string, unknown>) => string,
+  recordedAt?: number
 ): string | null {
   const op = other?.op
   if (!op?.action) return null
@@ -630,7 +631,8 @@ export function renderAuditContent(
     op.action,
     op.params ?? {},
     other?.audit_info?.success !== false,
-    t
+    t,
+    recordedAt
   )
   if (quotaOperation) {
     return `${quotaOperation.summary} · ${quotaOperation.description}`

@@ -45,6 +45,10 @@ export interface SystemConfig {
   demoSiteEnabled?: boolean
   displayTokenStatEnabled?: boolean
   currency: CurrencyConfig
+  pointsMigration?: {
+    cutoverTime: number
+    legacyQuotaPerUnit: number
+  }
 }
 
 export const DEFAULT_CURRENCY_CONFIG: CurrencyConfig = {
