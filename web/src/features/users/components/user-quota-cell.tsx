@@ -20,13 +20,18 @@ import { useTranslation } from 'react-i18next'
 
 import { QuotaDetailsPopover } from '@/components/quota-details-popover'
 import { StatusBadge } from '@/components/status-badge'
-import { formatQuotaWithCurrency, getCurrencyDisplay } from '@/lib/currency'
+import {
+  formatCumulativeQuota,
+  formatQuotaWithCurrency,
+  getCurrencyDisplay,
+} from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import { useSystemConfigStore } from '@/stores/system-config-store'
 
 type UserQuotaCellProps = {
   remaining: number
   used: number
+  legacyUsed?: number | null
 }
 
 export function UserQuotaCell(props: UserQuotaCellProps) {
@@ -39,7 +44,7 @@ export function UserQuotaCell(props: UserQuotaCellProps) {
   const formattedRemaining = formatQuotaWithCurrency(props.remaining, {
     showSymbol: false,
   })
-  const formattedUsed = formatQuotaWithCurrency(props.used, {
+  const formattedUsed = formatCumulativeQuota(props.used, props.legacyUsed, {
     showSymbol: false,
   })
 

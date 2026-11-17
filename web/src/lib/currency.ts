@@ -78,6 +78,8 @@ For commercial licensing, please contact support@quantumnous.com
  * 4. **Billing displays**: Use formatBillingCurrencyFromUSD() to avoid token display
  * 5. **Effective exchange rate**: When quotaDisplayType is 'USD', use rate of 1 regardless of config
  */
+import i18next from 'i18next'
+
 import {
   useSystemConfigStore,
   DEFAULT_CURRENCY_CONFIG,
@@ -103,6 +105,53 @@ export interface CurrencyFormatOptions {
   showSymbol?: boolean
   /** Locale used for number formatting (defaults to the runtime locale) */
   locale?: Intl.LocalesArgument | undefined
+}
+
+export interface RecordedCurrencyFormatOptions extends CurrencyFormatOptions {
+  /** Unix timestamp of a historical credit record, before or after the points cutover. */
+  recordedAt?: number
+}
+
+function getLegacyRecordUnit(
+  recordedAt: number | undefined
+): number | undefined {
+  const migration = useSystemConfigStore.getState().config.pointsMigration
+  if (
+    recordedAt == null ||
+    !Number.isFinite(recordedAt) ||
+    !migration ||
+    migration.cutoverTime <= 0 ||
+    migration.cutoverTime > Date.now() / 1000 ||
+    recordedAt >= migration.cutoverTime ||
+    !Number.isFinite(migration.legacyQuotaPerUnit) ||
+    migration.legacyQuotaPerUnit <= 0
+  ) {
+    return undefined
+  }
+  return migration.legacyQuotaPerUnit
+}
+
+export function getCurrentUsedQuota(
+  total: number,
+  legacyUsed?: number | null
+): number | undefined {
+  if (getLegacyRecordUnit(0) == null || total === 0) return total
+  if (legacyUsed == null || !Number.isFinite(legacyUsed)) return undefined
+  return total - legacyUsed
+}
+
+export function formatCumulativeQuota(
+  total: number,
+  legacyUsed?: number | null,
+  options?: CurrencyFormatOptions
+): string {
+  const current = getCurrentUsedQuota(total, legacyUsed)
+  if (current == null) {
+    return `${new Intl.NumberFormat(options?.locale, { maximumFractionDigits: 0 }).format(total)} ${i18next.t('Raw quota')}`
+  }
+  const currentDisplay = formatQuotaWithCurrency(current, options)
+  if (getLegacyRecordUnit(0) == null || !legacyUsed) return currentDisplay
+  return `${currentDisplay} · ${formatQuotaWithCurrency(legacyUsed, { ...options, recordedAt: 0, showSymbol: true })}`
 }
 
 type ResolvedCurrencyFormatOptions = Omit<
@@ -407,12 +456,20 @@ export function getCurrencyDisplay() {
  */
 export function formatCurrencyFromUSD(
   amountUSD: number | null | undefined,
-  options?: CurrencyFormatOptions
+  options?: RecordedCurrencyFormatOptions
 ): string {
   if (amountUSD == null || Number.isNaN(amountUSD)) return '-'
 
   const { config, meta } = getCurrencyDisplay()
   const merged = mergeOptions(options)
+
+  if (getLegacyRecordUnit(options?.recordedAt) != null) {
+    return formatCurrencyValue(amountUSD, merged, {
+      kind: 'custom',
+      symbol: i18next.t('Legacy credits'),
+      exchangeRate: 1,
+    })
+  }
 
   if (meta.kind === 'tokens') {
     const tokens = amountUSD * config.quotaPerUnit
@@ -470,9 +527,12 @@ export function formatCurrencyFromUSD(
  */
 export function formatBillingCurrencyFromUSD(
   amountUSD: number | null | undefined,
-  options?: CurrencyFormatOptions
+  options?: RecordedCurrencyFormatOptions
 ): string {
   if (amountUSD == null || Number.isNaN(amountUSD)) return '-'
+  if (getLegacyRecordUnit(options?.recordedAt) != null) {
+    return formatCurrencyFromUSD(amountUSD, options)
+  }
 
   const { config } = getCurrencyDisplay()
   const meta = getBillingDisplayMeta(config)
@@ -515,12 +575,13 @@ export function formatBillingCurrencyFromUSD(
  */
 export function formatQuotaWithCurrency(
   quota: number | null | undefined,
-  options?: CurrencyFormatOptions
+  options?: RecordedCurrencyFormatOptions
 ): string {
   if (quota == null || Number.isNaN(quota)) return '-'
 
   const { config } = getCurrencyDisplay()
-  const amountUSD = quota / config.quotaPerUnit
+  const amountUSD =
+    quota / (getLegacyRecordUnit(options?.recordedAt) ?? config.quotaPerUnit)
   return formatCurrencyFromUSD(amountUSD, options)
 }
 

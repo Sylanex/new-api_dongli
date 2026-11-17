@@ -115,7 +115,9 @@ describe('log cost display', () => {
 
     expect(screen.getByText('$0.025')).toBeVisible()
     expect(screen.getByRole('img', { name: 'Subscription' })).toBeVisible()
-    expect(screen.queryByRole('img', { name: 'Wallet' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('img', { name: 'Wallet' })
+    ).not.toBeInTheDocument()
   })
 
   test('keeps legacy cost visible without inventing a funding source', () => {
@@ -229,5 +231,18 @@ describe('log cost display', () => {
     expect(
       screen.getByRole('img', { name: 'Includes tool-call surcharge' })
     ).toHaveAttribute('data-tool-surcharge-indicator', 'true')
+  })
+  test('a pre-cutover log labels its charge in legacy credits', () => {
+    const state = useSystemConfigStore.getState()
+    state.setConfig({
+      currency: {
+        ...state.config.currency,
+        quotaDisplayType: 'CUSTOM',
+        customCurrencySymbol: '点',
+      },
+      pointsMigration: { cutoverTime: 1700000000, legacyQuotaPerUnit: 500000 },
+    })
+    renderCost({ quota: 500000, createdAt: 1699999999, other: null })
+    expect(screen.getByText('Legacy credits 1')).toBeVisible()
   })
 })

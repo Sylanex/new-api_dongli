@@ -525,3 +525,22 @@ it('keeps mobile quota readable and opens complete model and IP restrictions by 
   expect(within(details).getByText('192.0.2.1')).toBeVisible()
   expect(within(details).getByText('2001:db8::1')).toBeVisible()
 })
+
+it('calculates a migrated key percentage from current usage and remaining points', () => {
+  useSystemConfigStore.getState().setConfig({
+    currency: {
+      ...DEFAULT_CURRENCY_CONFIG,
+      quotaDisplayType: 'CUSTOM',
+      customCurrencySymbol: '点',
+    },
+    pointsMigration: { cutoverTime: 1700000000, legacyQuotaPerUnit: 500000 },
+  })
+  renderQuota({
+    ...key,
+    remain_quota: 500000,
+    used_quota: 1000000,
+    legacy_used_quota: 500000,
+  })
+  expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '50')
+  expect(screen.getByText('1 · Legacy credits 1')).toBeVisible()
+})

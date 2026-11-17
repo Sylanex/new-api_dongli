@@ -67,6 +67,11 @@ jobs:
           TEST_MYSQL_DSN: root:newapi-ci@tcp(127.0.0.1:3306)/newapi_ci?charset=utf8mb4&parseTime=True&loc=Local
           TEST_POSTGRES_DSN: host=127.0.0.1 port=5432 user=newapi password=newapi-ci dbname=newapi_ci sslmode=disable
         run: go test ./controller -run '^TestPaidOnlyCheckinDatabaseMatrix$' -count=1 -v
+      - name: Points migration on SQLite, MySQL and PostgreSQL
+        env:
+          TEST_MYSQL_DSN: root:newapi-ci@tcp(127.0.0.1:3306)/newapi_ci?charset=utf8mb4&parseTime=True&loc=Local
+          TEST_POSTGRES_DSN: host=127.0.0.1 port=5432 user=newapi password=newapi-ci dbname=newapi_ci sslmode=disable
+        run: go test ./controller -run '^TestPointsMigrationDatabaseMatrix$' -count=1 -v
 
   frontend:
     runs-on: ubuntu-latest
@@ -90,7 +95,7 @@ jobs:
           bun-version: ${{ steps.bun.outputs.version }}
       - run: bun install --frozen-lockfile
       - run: bun check -b
-      - name: Lint paid check-in files
+      - name: Lint Dongli feature files
         run: >-
           bun x oxlint -c .oxlintrc.json
           src/features/profile/components/checkin-calendar-card.tsx
@@ -101,5 +106,31 @@ jobs:
           src/features/system-settings/billing/index.tsx
           src/features/system-settings/billing/section-registry.tsx
           src/features/system-settings/types.ts
+          src/features/dashboard/components/overview/summary-cards.tsx
+          src/features/keys/components/api-key-quota-cell.tsx
+          src/features/keys/types.ts
+          src/features/usage-logs/audit/lib/audit-details.ts
+          src/features/usage-logs/components/columns/common-logs-columns.tsx
+          src/features/usage-logs/components/common-log-mobile-card.tsx
+          src/features/usage-logs/components/common-logs-stats.tsx
+          src/features/usage-logs/components/dialogs/details-dialog.tsx
+          src/features/usage-logs/components/dialogs/task-details-dialog.tsx
+          src/features/usage-logs/components/log-cost-display.tsx
+          src/features/usage-logs/lib/export.ts
+          src/features/usage-logs/lib/format.ts
+          src/features/usage-logs/lib/quota-audit-operation.ts
+          src/features/usage-logs/types.ts
+          src/features/users/components/user-quota-cell.tsx
+          src/features/users/components/users-columns.tsx
+          src/features/users/types.ts
+          src/features/wallet/components/dialogs/billing-history-dialog.tsx
+          src/features/wallet/components/wallet-stats-card.tsx
+          src/features/wallet/lib/billing.ts
+          src/features/wallet/types.ts
+          src/lib/currency.ts
+          src/lib/format.ts
+          src/lib/status-query.ts
+          src/stores/auth-store.ts
+          src/stores/system-config-store.ts
       - run: bun run test
       - run: bun run build

@@ -21,7 +21,12 @@ import { useTranslation } from 'react-i18next'
 import { QuotaDetailsPopover } from '@/components/quota-details-popover'
 import { Progress } from '@/components/ui/progress'
 import { toIntlLocale } from '@/i18n/languages'
-import { formatQuotaWithCurrency, getCurrencyDisplay } from '@/lib/currency'
+import {
+  formatCumulativeQuota,
+  formatQuotaWithCurrency,
+  getCurrencyDisplay,
+  getCurrentUsedQuota,
+} from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import { useSystemConfigStore } from '@/stores/system-config-store'
 
@@ -41,12 +46,18 @@ export function ApiKeyQuotaCell(props: ApiKeyQuotaCellProps) {
   const quotaUnit = currency.kind === 'tokens' ? t('Tokens') : currency.symbol
   const used = props.apiKey.used_quota
   const remaining = props.apiKey.remain_quota
-  const total = used + remaining
-  const hasProgress = !props.apiKey.unlimited_quota && total > 0
+  const currentUsed = getCurrentUsedQuota(used, props.apiKey.legacy_used_quota)
+  const total = (currentUsed ?? 0) + remaining
+  const hasProgress =
+    currentUsed != null && !props.apiKey.unlimited_quota && total > 0
   const percentage = hasProgress
     ? Math.min(100, Math.max(0, (remaining / total) * 100))
     : 0
-  const formattedUsed = formatQuotaWithCurrency(used, { showSymbol: false })
+  const formattedUsed = formatCumulativeQuota(
+    used,
+    props.apiKey.legacy_used_quota,
+    { showSymbol: false }
+  )
   const formattedRemaining = formatQuotaWithCurrency(remaining, {
     showSymbol: false,
   })
@@ -72,12 +83,19 @@ export function ApiKeyQuotaCell(props: ApiKeyQuotaCellProps) {
     ? `${t('Unlimited')}; ${usageDescription}`
     : `${remainingDescription}; ${usageDescription}`
 
+  const quotaDescription =
+    currentUsed !== used
+      ? t('Current total = usage since the points cutover + remaining.')
+      : t(
+          'Total = used + remaining. It is not an initial allocation or a periodic budget; changing the remaining quota changes the total and percentage.'
+        )
+
   const details = []
   if (!props.apiKey.unlimited_quota) {
     details.push({ label: t('Remaining'), value: formattedRemaining })
   }
   details.push({ label: t('Used amount'), value: formattedUsed })
-  if (!props.apiKey.unlimited_quota) {
+  if (!props.apiKey.unlimited_quota && currentUsed != null) {
     details.push({ label: t('Current total quota'), value: formattedTotal })
   }
   if (hasProgress) {
@@ -101,16 +119,15 @@ export function ApiKeyQuotaCell(props: ApiKeyQuotaCellProps) {
           ? t(
               'This API key has no quota limit. Requests still require available wallet or subscription quota.'
             )
-          : t(
-              'Total = used + remaining. It is not an initial allocation or a periodic budget; changing the remaining quota changes the total and percentage.'
-            )
+          : quotaDescription
       }
       className={
         props.variant === 'card' ? 'space-y-2.5' : 'max-w-45 space-y-1.5'
       }
       triggerClassName={props.variant === 'card' ? 'py-0' : undefined}
       afterTrigger={
-        !props.apiKey.unlimited_quota && (
+        !props.apiKey.unlimited_quota &&
+        currentUsed != null && (
           <Progress
             value={percentage}
             aria-label={t('Remaining percentage')}

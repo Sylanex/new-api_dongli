@@ -7755,6 +7755,11 @@
     "Zhipu V4": "Zhipu V4",
     "Zoom": "Zoom",
     "By clicking sign in, you agree to our": "Нажимая «Войти», вы соглашаетесь с нашими",
-    "By creating an account, you agree to our": "Создавая аккаунт, вы соглашаетесь с нашими"
+    "By creating an account, you agree to our": "Создавая аккаунт, вы соглашаетесь с нашими",
+    "Legacy credits": "Прежние кредиты",
+    "Legacy usage": "Расход прежних кредитов",
+    "Verify the payment method and amount before completing this legacy order": "Проверьте способ и сумму оплаты перед завершением прежнего заказа",
+    "Raw quota": "Исходная квота",
+    "Current total = usage since the points cutover + remaining.": "Текущая квота = расход после перехода на баллы + остаток."
   }
 }

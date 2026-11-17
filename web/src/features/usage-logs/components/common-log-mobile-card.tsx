@@ -84,7 +84,7 @@ export function CommonLogMobileCard<TData>(props: {
     },
     cost: {
       label: t('Cost'),
-      value: formatLogQuota(log.quota),
+      value: formatLogQuota(log.quota, log.created_at),
       visible: displayable && props.cells.has('quota'),
     },
     time: {

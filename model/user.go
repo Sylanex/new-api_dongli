@@ -96,7 +96,8 @@ type User struct {
 	AccessTokenCreatedAt *int64                     `json:"-" gorm:"type:bigint;column:access_token_created_at"`    // Deprecated: 旧版面板访问令牌，仅在升级后的过渡期内使用；删除 users.access_token 列时一并移除。
 	Quota                int                        `json:"quota" gorm:"type:int;default:0"`
 	UsedQuota            int                        `json:"used_quota" gorm:"type:int;default:0;column:used_quota"` // used quota
-	RequestCount         int                        `json:"request_count" gorm:"type:int;default:0;"`               // request number
+	LegacyUsedQuota      *int                       `json:"legacy_used_quota,omitempty" gorm:"type:bigint"`
+	RequestCount         int                        `json:"request_count" gorm:"type:int;default:0;"` // request number
 	Group                string                     `json:"group" gorm:"type:varchar(64);default:'default'"`
 	AffCode              string                     `json:"aff_code" gorm:"type:varchar(32);column:aff_code;uniqueIndex"`
 	AffCount             int                        `json:"aff_count" gorm:"type:int;default:0;column:aff_count"`
@@ -112,6 +113,14 @@ type User struct {
 	LastLoginAt          int64                      `json:"last_login_at" gorm:"default:0;column:last_login_at"`
 	AuthVersion          int64                      `json:"-" gorm:"type:bigint;not null;default:1;column:auth_version"`
 	AdminPermissions     map[string]map[string]bool `json:"admin_permissions,omitempty" gorm:"-:all"`
+}
+
+func (record *User) BeforeCreate(_ *gorm.DB) error {
+	if record.LegacyUsedQuota == nil && record.UsedQuota == 0 && operation_setting.ActivePointsCutoverTime() > 0 {
+		zero := 0
+		record.LegacyUsedQuota = &zero
+	}
+	return nil
 }
 
 func (user *User) ToBaseUser() *UserBase {
@@ -531,7 +540,7 @@ func GetSelfUserById(id int) (*User, error) {
 	err := DB.Model(&User{}).Select([]string{
 		"id", "username", "display_name", "role", "status", "email",
 		"github_id", "discord_id", "oidc_id", "wechat_id", "telegram_id",
-		"group", "quota", "used_quota", "request_count", "aff_code", "aff_count",
+		"group", "quota", "used_quota", "legacy_used_quota", "request_count", "aff_code", "aff_count",
 		"aff_quota", "aff_history", "inviter_id", "linux_do_id", "setting",
 		"stripe_customer", "auth_version",
 		"CASE WHEN password <> '' THEN 1 ELSE 0 END AS has_password",

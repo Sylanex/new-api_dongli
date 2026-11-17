@@ -86,7 +86,7 @@ export function getLogCsvRow(
     usage ? String(log.completion_tokens ?? 0) : '',
     usage ? String(other?.cache_tokens ?? 0) : '',
     usage ? String(cacheWrite) : '',
-    usage ? formatLogQuota(log.quota ?? 0) : '',
+    usage ? formatLogQuota(log.quota ?? 0, log.created_at) : '',
     isTimingLogType(log.type) ? `${log.use_time ?? 0}s` : '',
     log.ip ?? '',
     log.request_id ?? '',

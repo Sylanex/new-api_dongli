@@ -140,7 +140,8 @@ function buildTypeDetailSegments(
 ): DetailSegment[] {
   // Top-up, audit, and login logs can carry a localized operation descriptor.
   if (log.type === 1 || log.type === 3 || log.type === 7) {
-    const text = renderAuditContent(other, t) ?? renderLogContent(other, t)
+    const text =
+      renderAuditContent(other, t, log.created_at) ?? renderLogContent(other, t)
     return text ? [{ text }] : []
   }
 
@@ -161,7 +162,7 @@ function buildTypeDetailSegments(
       })
     }
     segments.push({
-      text: `${t('Fee')}: ${formatLogQuota(other?.fee_quota ?? log.quota)}`,
+      text: `${t('Fee')}: ${formatLogQuota(other?.fee_quota ?? log.quota, log.created_at)}`,
       muted: true,
     })
     return segments
@@ -171,7 +172,12 @@ function buildTypeDetailSegments(
 
   const segments: DetailSegment[] = []
 
-  const priceOpts = { digitsLarge: 4, digitsSmall: 6, abbreviate: false }
+  const priceOpts = {
+    digitsLarge: 4,
+    digitsSmall: 6,
+    abbreviate: false,
+    recordedAt: log.created_at,
+  }
   const formatPrice = (price: number) =>
     `${formatBillingCurrencyFromUSD(price, priceOpts)}/M`
   const formatPriceCompact = (price: number) =>
@@ -787,6 +793,7 @@ export function useCommonLogsColumns(
           const other = parseLogOther(log.other)
           return (
             <LogCostDisplay
+              createdAt={row.original.created_at}
               quota={quota}
               other={other}
               showBillingSource={showBillingSource}

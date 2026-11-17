@@ -17,9 +17,29 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import type { StatusBadgeProps } from '@/components/status-badge'
-import { formatTimestampToDate } from '@/lib/format'
+import { formatCurrencyFromUSD, formatQuotaWithCurrency } from '@/lib/currency'
+import { formatNumber, formatTimestampToDate } from '@/lib/format'
 
-import type { TopupStatus } from '../types'
+import type { TopupRecord, TopupStatus } from '../types'
+
+export function formatTopupPayment(
+  record: Pick<TopupRecord, 'money' | 'quoted_money'>
+): string {
+  return formatNumber(Number(record.quoted_money ?? record.money))
+}
+
+export function formatTopupCredit(record: TopupRecord): string {
+  const options = {
+    digitsLarge: 2,
+    digitsSmall: 2,
+    abbreviate: false,
+    recordedAt: record.complete_time || record.create_time,
+  }
+  if (record.credited_quota != null && record.credited_quota > 0) {
+    return formatQuotaWithCurrency(record.credited_quota, options)
+  }
+  return formatCurrencyFromUSD(record.amount, options)
+}
 
 // ============================================================================
 // Billing Utility Functions

@@ -24,6 +24,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { formatLogQuota } from '@/lib/format'
 import { requireServerSuccess } from '@/lib/server-error-message'
 import { cn } from '@/lib/utils'
+import { useSystemConfigStore } from '@/stores/system-config-store'
 
 import { getLogStats, getUserLogStats } from '../api'
 import { DEFAULT_LOG_STATS } from '../constants'
@@ -53,6 +54,9 @@ export function CommonLogsStats() {
   const { isAdminView: isAdmin } = useLogsViewScope()
   const searchParams = route.useSearch()
   const { sensitiveVisible } = useUsageLogsContext()
+  const cutoverTime = useSystemConfigStore(
+    (state) => state.config.pointsMigration?.cutoverTime ?? 0
+  )
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['usage-logs-stats', isAdmin, searchParams],
@@ -90,9 +94,24 @@ export function CommonLogsStats() {
     <div className='flex flex-wrap items-center gap-2'>
       <StatBadge
         label={t('Usage')}
-        value={sensitiveVisible ? formatLogQuota(stats?.quota || 0) : '••••'}
+        value={
+          sensitiveVisible
+            ? formatLogQuota((stats?.quota || 0) - (stats?.legacy_quota || 0))
+            : '••••'
+        }
         accent='bg-sky-500/70'
       />
+      {cutoverTime > 0 && (stats?.legacy_quota || 0) > 0 && (
+        <StatBadge
+          label={t('Legacy usage')}
+          value={
+            sensitiveVisible
+              ? formatLogQuota(stats?.legacy_quota || 0, cutoverTime - 1)
+              : '••••'
+          }
+          accent='bg-slate-400/70'
+        />
+      )}
       <StatBadge
         label={t('RPM')}
         value={stats?.rpm || 0}

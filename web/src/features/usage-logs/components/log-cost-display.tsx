@@ -39,6 +39,7 @@ import type { LogOtherData } from '../types'
 
 interface LogCostDisplayProps {
   quota: number
+  createdAt?: number
   other: LogOtherData | null
   showBillingSource?: boolean
 }
@@ -132,7 +133,9 @@ export function LogCostDisplay(props: LogCostDisplayProps) {
               <TooltipContent>{source}</TooltipContent>
             </Tooltip>
           ) : null}
-          <span className='whitespace-nowrap'>{formatLogQuota(quota)}</span>
+          <span className='whitespace-nowrap'>
+            {formatLogQuota(quota, props.createdAt)}
+          </span>
         </StatusBadge>
         {showToolSurcharge ? <ToolSurchargeMarker /> : null}
       </div>
