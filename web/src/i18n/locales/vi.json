@@ -7760,6 +7760,8 @@
     "Legacy usage": "Mức sử dụng tín dụng cũ",
     "Verify the payment method and amount before completing this legacy order": "Xác minh phương thức và số tiền thanh toán trước khi hoàn tất đơn hàng cũ này",
     "Raw quota": "Hạn mức thô",
-    "Current total = usage since the points cutover + remaining.": "Tổng hạn mức hiện tại = mức sử dụng từ khi chuyển sang điểm + hạn mức còn lại."
+    "Current total = usage since the points cutover + remaining.": "Tổng hạn mức hiện tại = mức sử dụng từ khi chuyển sang điểm + hạn mức còn lại.",
+    "Usage since migration": "Mức dùng sau chuyển đổi",
+    "Previously used {{amount}} legacy credits": "Trước chuyển đổi đã dùng {{amount}} tín dụng cũ"
   }
 }

@@ -7760,6 +7760,8 @@
     "Legacy usage": "Расход прежних кредитов",
     "Verify the payment method and amount before completing this legacy order": "Проверьте способ и сумму оплаты перед завершением прежнего заказа",
     "Raw quota": "Исходная квота",
-    "Current total = usage since the points cutover + remaining.": "Текущая квота = расход после перехода на баллы + остаток."
+    "Current total = usage since the points cutover + remaining.": "Текущая квота = расход после перехода на баллы + остаток.",
+    "Usage since migration": "Расход после перехода",
+    "Previously used {{amount}} legacy credits": "До перехода израсходовано {{amount}} старых кредитов"
   }
 }

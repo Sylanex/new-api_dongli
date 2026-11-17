@@ -7760,6 +7760,8 @@
     "Legacy usage": "Utilisation des anciens crédits",
     "Verify the payment method and amount before completing this legacy order": "Vérifiez le mode de paiement et le montant avant de finaliser cette ancienne commande",
     "Raw quota": "Quota brut",
-    "Current total = usage since the points cutover + remaining.": "Quota total actuel = utilisation depuis le passage aux points + quota restant."
+    "Current total = usage since the points cutover + remaining.": "Quota total actuel = utilisation depuis le passage aux points + quota restant.",
+    "Usage since migration": "Utilisation depuis la migration",
+    "Previously used {{amount}} legacy credits": "Avant la migration : {{amount}} crédits utilisés"
   }
 }

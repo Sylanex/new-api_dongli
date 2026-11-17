@@ -19,14 +19,17 @@ For commercial licensing, please contact support@quantumnous.com
 import { act, render, screen } from '@testing-library/react'
 import { createInstance } from 'i18next'
 import { I18nextProvider, initReactI18next } from 'react-i18next'
-import { beforeEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 
 import { BillingHistoryDialog } from '@/features/wallet/components/dialogs/billing-history-dialog'
 import en from '@/i18n/locales/en.json'
 import zh from '@/i18n/locales/zh.json'
 import { api } from '@/lib/api'
+import { mapStatusDataToConfig } from '@/lib/status-query'
+import { useSystemConfigStore } from '@/stores/system-config-store'
 
 import { RechargeFormCard } from '../components/recharge-form-card'
+import { WalletStatsCard } from '../components/wallet-stats-card'
 
 const i18n = createInstance()
 
@@ -125,3 +128,53 @@ it.each([
     expect(screen.getByPlaceholderText('Minimum 1')).toBeVisible()
   }
 )
+
+afterEach(() => {
+  useSystemConfigStore.setState(useSystemConfigStore.getInitialState(), true)
+})
+
+it('places pre-migration usage in the secondary line and keeps point units after the main values', () => {
+  useSystemConfigStore.getState().setConfig(
+    mapStatusDataToConfig({
+      quota_display_type: 'CUSTOM',
+      custom_currency_symbol: '点',
+      custom_currency_exchange_rate: 1,
+      quota_per_unit: 1000000,
+      points_migration_cutover_time: 1700000000,
+      points_migration_legacy_quota_per_unit: 500000,
+    })
+  )
+  const user = {
+    id: 1,
+    username: 'demo',
+    group: 'default',
+    quota: 57330000,
+    used_quota: 2500000,
+    legacy_used_quota: 500000,
+    request_count: 2,
+    aff_quota: 0,
+    aff_history_quota: 0,
+    aff_count: 0,
+  }
+  const card = (legacy: number | null) => (
+    <I18nextProvider i18n={i18n}>
+      <WalletStatsCard user={{ ...user, legacy_used_quota: legacy }} />
+    </I18nextProvider>
+  )
+  const { rerender } = render(card(500000))
+  expect(screen.getByText('切换后用量')).toBeVisible()
+  const amounts = screen
+    .getAllByRole('definition')
+    .map((node) => node.textContent)
+  expect(amounts).toContain('2 点')
+  expect(amounts).toContain('57.33 点')
+  expect(screen.getByText('切换前已用 1 旧额度')).toBeVisible()
+  rerender(card(0))
+  expect(screen.queryByText(/切换前已用/)).toBeNull()
+  expect(
+    screen.getAllByRole('definition').map((node) => node.textContent)
+  ).toContain('2.5 点')
+  rerender(card(null))
+  expect(screen.getByText(/2,500,000/)).toBeVisible()
+  expect(screen.queryByText('切换后用量')).toBeNull()
+})

@@ -7760,6 +7760,8 @@
     "Legacy usage": "旧クレジット使用量",
     "Verify the payment method and amount before completing this legacy order": "この旧注文を完了する前に支払い方法と支払い金額を確認してください",
     "Raw quota": "元のクォータ",
-    "Current total = usage since the points cutover + remaining.": "現在の合計クォータ = ポイント切替後の使用量 + 残りのクォータ。"
+    "Current total = usage since the points cutover + remaining.": "現在の合計クォータ = ポイント切替後の使用量 + 残りのクォータ。",
+    "Usage since migration": "移行後の使用量",
+    "Previously used {{amount}} legacy credits": "移行前の使用量：{{amount}} 旧クレジット"
   }
 }
