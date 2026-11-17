@@ -7760,6 +7760,8 @@
     "Legacy usage": "Legacy usage",
     "Verify the payment method and amount before completing this legacy order": "Verify the payment method and amount before completing this legacy order",
     "Raw quota": "Raw quota",
-    "Current total = usage since the points cutover + remaining.": "Current total = usage since the points cutover + remaining."
+    "Current total = usage since the points cutover + remaining.": "Current total = usage since the points cutover + remaining.",
+    "Usage since migration": "Usage since migration",
+    "Previously used {{amount}} legacy credits": "Previously used {{amount}} legacy credits"
   }
 }

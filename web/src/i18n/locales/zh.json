@@ -7760,6 +7760,8 @@
     "Legacy usage": "旧额度消耗",
     "Verify the payment method and amount before completing this legacy order": "请核实旧订单的付款方式和实付金额后再补单",
     "Raw quota": "原始额度（含历史单位）",
-    "Current total = usage since the points cutover + remaining.": "当前总额度 = 切换点数后的消耗 + 剩余额度。"
+    "Current total = usage since the points cutover + remaining.": "当前总额度 = 切换点数后的消耗 + 剩余额度。",
+    "Usage since migration": "切换后用量",
+    "Previously used {{amount}} legacy credits": "切换前已用 {{amount}} 旧额度"
   }
 }
