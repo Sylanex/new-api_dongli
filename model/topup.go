@@ -75,21 +75,24 @@ func (topUp *TopUp) AfterFind(_ *gorm.DB) error {
 	return nil
 }
 
-// epayTopUpQuota preserves the CNY amount paid for an order created before
-// the points migration. The original Amount and Money remain audit evidence.
+// Discounted orders keep the purchased face value across the points cutover.
 func epayTopUpQuota(topUp *TopUp) (int, error) {
+	unit := decimal.NewFromFloat(common.QuotaPerUnit)
 	amount := decimal.NewFromInt(topUp.Amount)
 	if cutover := operation_setting.ActivePointsCutoverTime(); cutover > 0 && topUp.CreateTime < cutover {
 		if topUp.PaymentProvider == "" && topUp.PaymentMethod != "alipay" && topUp.PaymentMethod != "wxpay" && topUp.PaymentMethod != "wechat" {
 			return 0, ErrLegacyTopUpNeedsReview
 		}
-		var err error
-		amount, err = decimal.NewFromString(topUp.epayMoneyQuote())
+		quote, err := decimal.NewFromString(topUp.epayMoneyQuote())
 		if err != nil {
 			return 0, ErrInvalidTopUpQuota
 		}
+		if quotedQuota, err := common.WalletQuotaFromDecimalStrict(quote.Mul(unit)); err != nil || quotedQuota <= 0 {
+			return 0, ErrInvalidTopUpQuota
+		}
+		amount = amount.Mul(decimal.New(73, -1)) // 1 legacy credit bought 7.3 points at cutover.
 	}
-	quota, err := common.WalletQuotaFromDecimalStrict(amount.Mul(decimal.NewFromFloat(common.QuotaPerUnit)))
+	quota, err := common.WalletQuotaFromDecimalStrict(amount.Mul(unit))
 	if err != nil || quota <= 0 {
 		return 0, ErrInvalidTopUpQuota
 	}
@@ -524,7 +527,7 @@ func ManualCompleteTopUp(tradeNo string, callerIp string) error {
 			return common.NewMessage("Order is not pending payment and cannot be completed")
 		}
 
-		// Epay orders created before the points cutover use the paid CNY amount.
+		// Epay orders created before the points cutover retain their purchased credits.
 		// Other orders retain their provider's existing credit calculation.
 		var quotaErr error
 		if topUp.PaymentProvider == PaymentProviderEpay || topUp.PaymentProvider == "" {
