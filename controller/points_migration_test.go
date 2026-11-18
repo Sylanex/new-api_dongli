@@ -139,11 +139,11 @@ func TestPointsMigrationDatabaseMatrix(t *testing.T) {
 			}{
 				{name: "restriction inactive preserves old credits", provider: model.PaymentProviderEpay, method: "alipay", money: 7.33, wantQuota: 500000},
 				{name: "future cutover preserves old credits", cutover: time.Now().Add(time.Hour).Unix(), provider: model.PaymentProviderEpay, method: "alipay", money: 7.33, wantQuota: 500000},
-				{name: "old epay callback credits the paid CNY including cents", cutover: cutover, createdAt: cutover - 1, provider: model.PaymentProviderEpay, method: "alipay", money: 7.33, wantQuota: 3665000},
-				{name: "old epay uses the gateway two-decimal quote", cutover: cutover, createdAt: cutover - 1, provider: model.PaymentProviderEpay, method: "alipay", money: 6.935, wantQuota: 3465000, wantQuote: "6.93"},
+				{name: "old epay callback converts the legacy face value", cutover: cutover, createdAt: cutover - 1, provider: model.PaymentProviderEpay, method: "alipay", money: 7.33, wantQuota: 3650000},
+				{name: "discounted old epay retains its quote and full face value", cutover: cutover, createdAt: cutover - 1, provider: model.PaymentProviderEpay, method: "alipay", money: 6.935, wantQuota: 3650000, wantQuote: "6.93"},
 				{name: "new order uses its quoted credit amount", cutover: cutover, createdAt: cutover, provider: model.PaymentProviderEpay, method: "wxpay", money: 7.33, wantQuota: 500000},
-				{name: "manual old epay completion uses the paid CNY", cutover: cutover, createdAt: cutover - 1, provider: model.PaymentProviderEpay, method: "wxpay", money: 7.33, manual: true, wantQuota: 3665000},
-				{name: "manual legacy provider with known method uses the paid CNY", cutover: cutover, createdAt: cutover - 1, method: "wechat", money: 7.33, manual: true, wantQuota: 3665000},
+				{name: "manual old epay completion converts the face value", cutover: cutover, createdAt: cutover - 1, provider: model.PaymentProviderEpay, method: "wxpay", money: 7.33, manual: true, wantQuota: 3650000},
+				{name: "manual legacy provider with known method converts the face value", cutover: cutover, createdAt: cutover - 1, method: "wechat", money: 7.33, manual: true, wantQuota: 3650000},
 				{name: "ambiguous legacy payment remains pending for review", cutover: cutover, createdAt: cutover - 1, money: 7.33, manual: true, wantError: model.ErrLegacyTopUpNeedsReview},
 				{name: "zero paid money leaves order and wallet unchanged", cutover: cutover, createdAt: cutover - 1, provider: model.PaymentProviderEpay, method: "alipay", wantError: model.ErrInvalidTopUpQuota},
 				{name: "negative paid money leaves order and wallet unchanged", cutover: cutover, createdAt: cutover - 1, provider: model.PaymentProviderEpay, method: "alipay", money: -1, wantError: model.ErrInvalidTopUpQuota},
@@ -202,7 +202,7 @@ func TestPointsMigrationDatabaseMatrix(t *testing.T) {
 				}
 				user := model.User{Username: "points_concurrent", AffCode: "points_concurrent"}
 				require.NoError(t, db.Create(&user).Error)
-				order := model.TopUp{UserId: user.Id, Amount: 1, Money: 7.33, TradeNo: "points_concurrent", CreateTime: cutover - 1, PaymentProvider: model.PaymentProviderEpay, PaymentMethod: "alipay", Status: common.TopUpStatusPending}
+				order := model.TopUp{UserId: user.Id, Amount: 10, Money: 67.89, TradeNo: "points_concurrent", CreateTime: cutover - 1, PaymentProvider: model.PaymentProviderEpay, PaymentMethod: "alipay", Status: common.TopUpStatusPending}
 				require.NoError(t, db.Create(&order).Error)
 				var group sync.WaitGroup
 				errors := make(chan error, 4)
@@ -215,7 +215,7 @@ func TestPointsMigrationDatabaseMatrix(t *testing.T) {
 					require.NoError(t, err)
 				}
 				require.NoError(t, db.First(&user, user.Id).Error)
-				assert.Equal(t, 3665000, user.Quota)
+				assert.Equal(t, 36500000, user.Quota)
 			})
 
 			t.Run("cross-cutover usage totals retain separate units and filters", func(t *testing.T) {
