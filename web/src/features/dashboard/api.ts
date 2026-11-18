@@ -17,6 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { api } from '@/lib/api'
+import { getChartQuota, getCumulativeDisplayQuota } from '@/lib/currency'
 
 import type {
   FlowQuotaDataItem,
@@ -31,6 +32,16 @@ import type {
 // ----------------------------------------------------------------------------
 // Quota & Usage Data
 // ----------------------------------------------------------------------------
+
+function chartRows(response: { success: boolean; data: QuotaDataItem[] }) {
+  return {
+    ...response,
+    data: response.data?.map((row) => ({
+      ...row,
+      quota: getChartQuota(row.quota ?? 0, row.created_at),
+    })),
+  }
+}
 
 // Get user quota data within a time range
 // Admin users get all users' data by default.
@@ -48,7 +59,7 @@ export async function getUserQuotaDates(
     endpoint,
     { params }
   )
-  return res.data
+  return chartRows(res.data)
 }
 
 // ----------------------------------------------------------------------------
@@ -63,7 +74,7 @@ export async function getUserQuotaDataByUsers(params: {
     '/api/data/users',
     { params }
   )
-  return res.data
+  return chartRows(res.data)
 }
 
 export async function getFlowQuotaDates(
@@ -81,7 +92,13 @@ export async function getFlowQuotaDates(
     data?: FlowQuotaDataItem[]
     message?: string
   }>(endpoint, { params })
-  return res.data
+  return {
+    ...res.data,
+    data: res.data.data?.map((row) => ({
+      ...row,
+      quota: getCumulativeDisplayQuota(row.quota ?? 0, row.legacy_quota),
+    })),
+  }
 }
 
 // Get uptime monitoring status for all services

@@ -131,13 +131,34 @@ function getLegacyRecordUnit(
   return migration.legacyQuotaPerUnit
 }
 
-export function getCurrentUsedQuota(
+// Dongli's cutover converted each legacy credit to 7.3 points. This is a
+// historical rate, independent of subsequent top-up prices and discounts.
+const POINTS_PER_LEGACY_CREDIT = 7.3
+
+function legacyUsageInCurrentQuota(quota: number, legacyUnit: number): number {
+  return (
+    (quota / legacyUnit) * POINTS_PER_LEGACY_CREDIT * getConfig().quotaPerUnit
+  )
+}
+
+// Convert each dated chart bucket before aggregating it with other buckets.
+export function getChartQuota(quota: number, recordedAt: number): number {
+  const legacyUnit = getLegacyRecordUnit(recordedAt)
+  return legacyUnit == null
+    ? quota
+    : legacyUsageInCurrentQuota(quota, legacyUnit)
+}
+
+export function getCumulativeDisplayQuota(
   total: number,
   legacyUsed?: number | null
 ): number | undefined {
-  if (getLegacyRecordUnit(0) == null || total === 0) return total
-  if (legacyUsed == null || !Number.isFinite(legacyUsed)) return undefined
-  return total - legacyUsed
+  const legacyUnit = getLegacyRecordUnit(0)
+  if (legacyUnit == null) return total
+  if (legacyUsed == null || !Number.isFinite(legacyUsed)) {
+    return total === 0 ? 0 : undefined
+  }
+  return total - legacyUsed + legacyUsageInCurrentQuota(legacyUsed, legacyUnit)
 }
 
 export function formatCumulativeQuota(
@@ -145,13 +166,11 @@ export function formatCumulativeQuota(
   legacyUsed?: number | null,
   options?: CurrencyFormatOptions
 ): string {
-  const current = getCurrentUsedQuota(total, legacyUsed)
-  if (current == null) {
+  const quota = getCumulativeDisplayQuota(total, legacyUsed)
+  if (quota == null) {
     return `${new Intl.NumberFormat(options?.locale, { maximumFractionDigits: 0 }).format(total)} ${i18next.t('Raw quota')}`
   }
-  const currentDisplay = formatQuotaWithCurrency(current, options)
-  if (getLegacyRecordUnit(0) == null || !legacyUsed) return currentDisplay
-  return `${currentDisplay} · ${formatQuotaWithCurrency(legacyUsed, { ...options, recordedAt: 0, showSymbol: true })}`
+  return formatQuotaWithCurrency(quota, options)
 }
 
 type ResolvedCurrencyFormatOptions = Omit<

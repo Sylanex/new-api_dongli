@@ -25,7 +25,7 @@ import {
   formatCumulativeQuota,
   formatQuotaWithCurrency,
   getCurrencyDisplay,
-  getCurrentUsedQuota,
+  getCumulativeDisplayQuota,
 } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import { useSystemConfigStore } from '@/stores/system-config-store'
@@ -46,10 +46,13 @@ export function ApiKeyQuotaCell(props: ApiKeyQuotaCellProps) {
   const quotaUnit = currency.kind === 'tokens' ? t('Tokens') : currency.symbol
   const used = props.apiKey.used_quota
   const remaining = props.apiKey.remain_quota
-  const currentUsed = getCurrentUsedQuota(used, props.apiKey.legacy_used_quota)
-  const total = (currentUsed ?? 0) + remaining
+  const cumulativeUsed = getCumulativeDisplayQuota(
+    used,
+    props.apiKey.legacy_used_quota
+  )
+  const total = (cumulativeUsed ?? 0) + remaining
   const hasProgress =
-    currentUsed != null && !props.apiKey.unlimited_quota && total > 0
+    cumulativeUsed != null && !props.apiKey.unlimited_quota && total > 0
   const percentage = hasProgress
     ? Math.min(100, Math.max(0, (remaining / total) * 100))
     : 0
@@ -83,19 +86,16 @@ export function ApiKeyQuotaCell(props: ApiKeyQuotaCellProps) {
     ? `${t('Unlimited')}; ${usageDescription}`
     : `${remainingDescription}; ${usageDescription}`
 
-  const quotaDescription =
-    currentUsed !== used
-      ? t('Current total = usage since the points cutover + remaining.')
-      : t(
-          'Total = used + remaining. It is not an initial allocation or a periodic budget; changing the remaining quota changes the total and percentage.'
-        )
+  const quotaDescription = t(
+    'Total = used + remaining. It is not an initial allocation or a periodic budget; changing the remaining quota changes the total and percentage.'
+  )
 
   const details = []
   if (!props.apiKey.unlimited_quota) {
     details.push({ label: t('Remaining'), value: formattedRemaining })
   }
   details.push({ label: t('Used amount'), value: formattedUsed })
-  if (!props.apiKey.unlimited_quota && currentUsed != null) {
+  if (!props.apiKey.unlimited_quota && cumulativeUsed != null) {
     details.push({ label: t('Current total quota'), value: formattedTotal })
   }
   if (hasProgress) {
@@ -127,7 +127,7 @@ export function ApiKeyQuotaCell(props: ApiKeyQuotaCellProps) {
       triggerClassName={props.variant === 'card' ? 'py-0' : undefined}
       afterTrigger={
         !props.apiKey.unlimited_quota &&
-        currentUsed != null && (
+        cumulativeUsed != null && (
           <Progress
             value={percentage}
             aria-label={t('Remaining percentage')}

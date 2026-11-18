@@ -25,6 +25,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { IconBadge, type IconBadgeTone } from '@/components/ui/icon-badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getUserAvatarFallback, getUserAvatarStyle } from '@/lib/avatar'
+import { formatCumulativeQuota } from '@/lib/currency'
 import { formatCompactNumber, formatQuota } from '@/lib/format'
 import { getRoleLabel } from '@/lib/roles'
 
@@ -100,7 +101,10 @@ export function ProfileHeader({ profile, loading }: ProfileHeaderProps) {
     },
     {
       label: t('Total Usage'),
-      value: formatQuota(profile.used_quota),
+      value: formatCumulativeQuota(
+        profile.used_quota,
+        profile.legacy_used_quota
+      ),
       description: t('Total consumed quota'),
       icon: BarChart3,
       tone: 'info',

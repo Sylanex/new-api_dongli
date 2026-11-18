@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next'
 
 import { Dialog } from '@/components/dialog'
 import { Label } from '@/components/ui/label'
+import { formatCumulativeQuota } from '@/lib/currency'
 import { formatQuota, formatCompactNumber } from '@/lib/format'
 import { handleServerError } from '@/lib/handle-server-error'
 
@@ -115,7 +116,10 @@ export function UserInfoDialog({
             />
             <InfoItem
               label={t('Used Quota')}
-              value={formatQuota(userInfo.used_quota)}
+              value={formatCumulativeQuota(
+                userInfo.used_quota,
+                userInfo.legacy_used_quota
+              )}
             />
           </div>
 

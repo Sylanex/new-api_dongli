@@ -38,7 +38,7 @@ afterEach(() => {
   localStorage.clear()
 })
 
-test('cross-cutover statistics display point usage and legacy usage separately', async () => {
+test('cross-cutover statistics display both periods in points', async () => {
   const state = useSystemConfigStore.getState()
   state.setConfig({
     currency: {
@@ -78,7 +78,6 @@ test('cross-cutover statistics display point usage and legacy usage separately',
       <RouterProvider router={router} />
     </QueryClientProvider>
   )
-  expect(await screen.findByText('Legacy usage')).toBeVisible()
-  expect(screen.getByText('Legacy credits 1')).toBeVisible()
-  expect(screen.getByText('点 2')).toBeVisible()
+  expect(await screen.findByText('点 9.3')).toBeVisible()
+  expect(screen.queryByText('Legacy usage')).toBeNull()
 })

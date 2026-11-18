@@ -28,7 +28,8 @@ import {
   formatCurrencyFromUSD,
   formatQuotaWithCurrency,
   formatCumulativeQuota,
-  getCurrentUsedQuota,
+  getCumulativeDisplayQuota,
+  getChartQuota,
 } from '@/lib/currency'
 import { formatLogQuota } from '@/lib/format'
 import { mapStatusDataToConfig } from '@/lib/status-query'
@@ -117,12 +118,25 @@ test('payment history uses the actual gateway quote with two decimal places', ()
 })
 
 test('cumulative usage uses the recorded baseline rather than adding different units', () => {
-  expect(formatCumulativeQuota(1500000, 500000)).toBe('点 1 · Legacy credits 1')
-  expect(getCurrentUsedQuota(1500000, 500000)).toBe(1000000)
+  expect(formatCumulativeQuota(1500000, 500000)).toBe('点 8.3')
+  expect(getCumulativeDisplayQuota(7000000, 5000000)).toBe(75000000)
   expect(formatCumulativeQuota(1000000, 0)).toBe('点 1')
 })
 
 test('missing cumulative baselines show raw quota instead of a misleading point total', () => {
-  expect(getCurrentUsedQuota(1500000)).toBeUndefined()
+  expect(getCumulativeDisplayQuota(1500000)).toBeUndefined()
   expect(formatCumulativeQuota(1500000)).toBe('1,500,000 Raw quota')
+})
+
+test('dated buckets add up to the same points as the wallet across the cutover', () => {
+  expect(
+    getChartQuota(5000000, cutoverTime - 1) +
+      getChartQuota(2000000, cutoverTime)
+  ).toBe(75000000)
+  expect(formatCumulativeQuota(0, 500000)).toBe('点 6.8')
+  useSystemConfigStore.getState().setConfig({
+    pointsMigration: { cutoverTime: 0, legacyQuotaPerUnit: 500000 },
+  })
+  expect(getChartQuota(5000000, cutoverTime - 1)).toBe(5000000)
+  expect(formatCumulativeQuota(7000000, 5000000)).toBe('点 7')
 })

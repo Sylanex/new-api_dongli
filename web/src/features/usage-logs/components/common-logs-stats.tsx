@@ -21,7 +21,7 @@ import { getRouteApi } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatLogQuota } from '@/lib/format'
+import { formatCumulativeQuota } from '@/lib/currency'
 import { requireServerSuccess } from '@/lib/server-error-message'
 import { cn } from '@/lib/utils'
 import { useSystemConfigStore } from '@/stores/system-config-store'
@@ -54,9 +54,7 @@ export function CommonLogsStats() {
   const { isAdminView: isAdmin } = useLogsViewScope()
   const searchParams = route.useSearch()
   const { sensitiveVisible } = useUsageLogsContext()
-  const cutoverTime = useSystemConfigStore(
-    (state) => state.config.pointsMigration?.cutoverTime ?? 0
-  )
+  useSystemConfigStore((state) => state.config)
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['usage-logs-stats', isAdmin, searchParams],
@@ -96,22 +94,15 @@ export function CommonLogsStats() {
         label={t('Usage')}
         value={
           sensitiveVisible
-            ? formatLogQuota((stats?.quota || 0) - (stats?.legacy_quota || 0))
+            ? formatCumulativeQuota(stats?.quota ?? 0, stats?.legacy_quota, {
+                digitsLarge: 4,
+                digitsSmall: 6,
+                abbreviate: false,
+              })
             : '••••'
         }
         accent='bg-sky-500/70'
       />
-      {cutoverTime > 0 && (stats?.legacy_quota || 0) > 0 && (
-        <StatBadge
-          label={t('Legacy usage')}
-          value={
-            sensitiveVisible
-              ? formatLogQuota(stats?.legacy_quota || 0, cutoverTime - 1)
-              : '••••'
-          }
-          accent='bg-slate-400/70'
-        />
-      )}
       <StatBadge
         label={t('RPM')}
         value={stats?.rpm || 0}
