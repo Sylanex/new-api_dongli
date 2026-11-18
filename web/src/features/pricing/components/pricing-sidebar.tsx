@@ -20,6 +20,7 @@ import { ChevronDown, RotateCcw } from 'lucide-react'
 import { memo, useMemo, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { formatUserGroupName } from '@/components/model-group-selector/group-detail'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -202,7 +203,7 @@ export const PricingSidebar = memo(function PricingSidebar(
     },
     ...props.groups.map((group) => ({
       value: group,
-      label: group,
+      label: formatUserGroupName(group, t),
       suffix: formatGroupRatio(props.groupRatios?.[group]),
     })),
   ]

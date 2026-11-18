@@ -19,7 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { createInstance } from 'i18next'
 import { describe, expect, test } from 'vitest'
 
-import { formatGroupDetail } from '../group-detail'
+import { formatGroupDetail, formatUserGroupName } from '../group-detail'
 
 describe('model group selector group detail', () => {
   test('translates the backend description key and the auto ratio when the language is Chinese', async () => {
@@ -53,4 +53,10 @@ describe('model group selector group detail', () => {
       'No ratio'
     )
   })
+})
+
+test('gives the default route a localized name and preserves custom group names', () => {
+  const t = (key: string) => (key === 'General writing' ? '通用创作' : key)
+  expect(formatUserGroupName('default', t)).toBe('通用创作')
+  expect(formatUserGroupName('my-writing-group', t)).toBe('my-writing-group')
 })

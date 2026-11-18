@@ -28,6 +28,7 @@ import { api } from '@/lib/api'
 import { mapStatusDataToConfig } from '@/lib/status-query'
 import { useSystemConfigStore } from '@/stores/system-config-store'
 
+import { PaymentConfirmDialog } from '../components/dialogs/payment-confirm-dialog'
 import { RechargeFormCard } from '../components/recharge-form-card'
 import { WalletStatsCard } from '../components/wallet-stats-card'
 
@@ -128,6 +129,67 @@ it.each([
     expect(screen.getByPlaceholderText('Minimum 1')).toBeVisible()
   }
 )
+
+it('shows the same points on recharge presets and payment confirmation', () => {
+  const currency = mapStatusDataToConfig({
+    quota_display_type: 'CUSTOM',
+    custom_currency_symbol: '点',
+    custom_currency_exchange_rate: 1,
+    usd_exchange_rate: 7.3,
+    price: 1,
+  }).currency
+  const { rerender } = render(
+    <I18nextProvider i18n={i18n}>
+      <RechargeFormCard
+        topupInfo={{
+          enable_online_topup: true,
+          enable_stripe_topup: false,
+          pay_methods: [],
+          min_topup: 10,
+          stripe_min_topup: 1,
+          amount_options: [10, 20, 30],
+          discount: {},
+        }}
+        presetAmounts={[10, 20, 30].map((value) => ({ value }))}
+        selectedPreset={10}
+        topupAmount={10}
+        paymentAmount={10}
+        currency={currency}
+        calculating={false}
+        paymentLoading={null}
+        redemptionCode=''
+        redeeming={false}
+        onSelectPreset={vi.fn()}
+        onTopupAmountChange={vi.fn()}
+        onPaymentMethodSelect={vi.fn()}
+        onRedemptionCodeChange={vi.fn()}
+        onRedeem={vi.fn()}
+      />
+    </I18nextProvider>
+  )
+  for (const value of [10, 20, 30]) {
+    expect(
+      screen.getByRole('button', { name: new RegExp(`^${value} 点`) })
+    ).toHaveTextContent(`支付 ${value}`)
+  }
+  rerender(
+    <I18nextProvider i18n={i18n}>
+      <PaymentConfirmDialog
+        open
+        onOpenChange={vi.fn()}
+        onConfirm={vi.fn()}
+        topupAmount={10}
+        paymentAmount={10}
+        paymentMethod={undefined}
+        calculating={false}
+        processing={false}
+        currency={currency}
+      />
+    </I18nextProvider>
+  )
+  expect(screen.getByText('10 点')).toBeVisible()
+  expect(screen.getByText('10', { exact: true })).toBeVisible()
+})
 
 afterEach(() => {
   useSystemConfigStore.setState(useSystemConfigStore.getInitialState(), true)

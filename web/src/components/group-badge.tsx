@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
 
+import { formatUserGroupName } from './model-group-selector/group-detail'
 import { StatusBadge, type StatusBadgeProps } from './status-badge'
 import { Badge } from './ui/badge'
 
@@ -75,7 +76,7 @@ function getGroupLabel(params: {
   if (params.labelOverride) return params.labelOverride
   if (params.isEmptyGroup) return params.t('User Group')
   if (params.isAutoGroup) return params.t('Auto')
-  return params.groupName ?? ''
+  return formatUserGroupName(params.groupName ?? '', params.t)
 }
 
 export function GroupBadge(props: GroupBadgeProps) {
@@ -107,6 +108,9 @@ export function GroupBadge(props: GroupBadgeProps) {
     <StatusBadge
       {...badgeProps}
       copyable={copyable}
+      copyText={
+        badgeProps.copyText ?? (groupName === 'default' ? groupName : undefined)
+      }
       label={label}
       showDot={showDot ?? (isSpecialGroup ? false : undefined)}
       variant={isSpecialGroup ? 'neutral' : undefined}

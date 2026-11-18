@@ -34,6 +34,7 @@ import {
   sideDrawerHeaderClassName,
   sideDrawerSwitchItemClassName,
 } from '@/components/drawer-layout'
+import { formatUserGroupName } from '@/components/model-group-selector/group-detail'
 import { MultiSelect } from '@/components/multi-select'
 import { Button } from '@/components/ui/button'
 import {
@@ -166,7 +167,7 @@ export function ApiKeysMutateDrawer({
     () =>
       Object.entries(groupsData?.data || {}).map(([key, info]) => ({
         value: key,
-        label: key,
+        label: formatUserGroupName(key, t),
         desc: info.desc ? translateServerText(t, info.desc) : key,
         ratio: info.ratio,
       })),

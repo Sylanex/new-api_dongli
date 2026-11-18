@@ -30,7 +30,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatLocalCurrencyAmount } from '@/lib/currency'
+import { formatTopupCredit } from '@/lib/currency'
+import type { CurrencyConfig } from '@/stores/system-config-store'
 
 import { DEFAULT_DISCOUNT_RATE } from '../../constants'
 import { formatCurrency, getPaymentIcon } from '../../lib'
@@ -46,7 +47,7 @@ interface PaymentConfirmDialogProps {
   calculating: boolean
   processing: boolean
   discountRate?: number
-  usdExchangeRate?: number
+  currency?: CurrencyConfig
 }
 
 export function PaymentConfirmDialog({
@@ -59,7 +60,7 @@ export function PaymentConfirmDialog({
   calculating,
   processing,
   discountRate = DEFAULT_DISCOUNT_RATE,
-  usdExchangeRate = 1,
+  currency,
 }: PaymentConfirmDialogProps) {
   const { t } = useTranslation()
   const hasDiscount = discountRate > 0 && discountRate < 1 && paymentAmount > 0
@@ -84,11 +85,7 @@ export function PaymentConfirmDialog({
               {t('Topup Amount')}
             </span>
             <span className='text-lg font-semibold'>
-              {formatLocalCurrencyAmount(topupAmount * usdExchangeRate, {
-                digitsLarge: 2,
-                digitsSmall: 2,
-                abbreviate: false,
-              })}
+              {formatTopupCredit(topupAmount, currency, true)}
             </span>
           </div>
 

@@ -34,8 +34,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { formatNumber } from '@/lib/format'
+import { formatTopupCredit } from '@/lib/currency'
 import { cn } from '@/lib/utils'
+import type { CurrencyConfig } from '@/stores/system-config-store'
 
 import {
   formatCurrency,
@@ -71,7 +72,7 @@ interface RechargeFormCardProps {
   topupLink?: string
   loading?: boolean
   priceRatio?: number
-  usdExchangeRate?: number
+  currency?: CurrencyConfig
   onOpenBilling?: () => void
   creemProducts?: CreemProduct[]
   enableCreemTopup?: boolean
@@ -101,7 +102,7 @@ export function RechargeFormCard({
   topupLink,
   loading,
   priceRatio = 1,
-  usdExchangeRate = 1,
+  currency,
   onOpenBilling,
   creemProducts,
   enableCreemTopup,
@@ -232,17 +233,12 @@ export function RechargeFormCard({
                         preset.discount ||
                         topupInfo?.discount?.[preset.value] ||
                         1.0
-                      const {
-                        displayValue,
-                        actualPrice,
-                        savedAmount,
-                        hasDiscount,
-                      } = calculatePresetPricing(
-                        preset.value,
-                        priceRatio,
-                        discount,
-                        usdExchangeRate
-                      )
+                      const { actualPrice, savedAmount, hasDiscount } =
+                        calculatePresetPricing(
+                          preset.value,
+                          priceRatio,
+                          discount
+                        )
                       return (
                         <Button
                           key={preset.value}
@@ -257,7 +253,7 @@ export function RechargeFormCard({
                         >
                           <div className='flex w-full items-center justify-between'>
                             <div className='text-base font-semibold sm:text-lg'>
-                              {formatNumber(displayValue)}
+                              {formatTopupCredit(preset.value, currency)}
                             </div>
                             {hasDiscount && (
                               <div className='text-xs font-medium text-green-600'>

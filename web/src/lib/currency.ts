@@ -456,6 +456,28 @@ export function getCurrencyDisplay() {
   return { config, meta }
 }
 
+// Recharge requests already contain raw quota in TOKENS mode. Other modes
+// submit face value, with the configured display rate applied only to the label.
+export function formatTopupCredit(
+  amount: number,
+  config: CurrencyConfig = getConfig(),
+  showSymbol = false
+): string {
+  const meta = getDisplayMeta(config)
+  const options = mergeOptions({ showSymbol, abbreviate: false })
+  if (meta.kind === 'tokens') return formatCurrencyValue(amount, options, meta)
+  const value = amount * meta.exchangeRate
+  if (meta.kind === 'custom' && ['点', '點'].includes(meta.symbol)) {
+    const number = formatCurrencyValue(
+      value,
+      { ...options, showSymbol: false },
+      meta
+    )
+    return `${number} ${meta.symbol}`
+  }
+  return formatCurrencyValue(value, options, meta)
+}
+
 /**
  * Format a USD amount according to the admin-configured display settings.
  *

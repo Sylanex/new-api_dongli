@@ -18,6 +18,10 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { translateServerText } from '@/lib/server-error-message'
 
+export function formatUserGroupName(group: string, t: (key: string) => string) {
+  return group === 'default' ? t('General writing') : group
+}
+
 export interface GroupDetailSource {
   ratio?: number | string
   desc?: string
