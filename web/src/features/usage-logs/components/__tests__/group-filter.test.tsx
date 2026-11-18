@@ -126,10 +126,12 @@ it('loads personal groups and filters choices without submitting until Search', 
   const router = await renderFilter()
   const input = screen.getByRole('combobox', { name: 'Group' })
   await userEvent.click(input)
-  expect(await screen.findByRole('option', { name: 'default' })).toBeVisible()
+  expect(
+    await screen.findByRole('option', { name: 'General writing' })
+  ).toBeVisible()
   await userEvent.type(input, 'prem')
   expect(
-    screen.queryByRole('option', { name: 'default' })
+    screen.queryByRole('option', { name: 'General writing' })
   ).not.toBeInTheDocument()
   await userEvent.click(screen.getByRole('option', { name: 'premium' }))
   expect(input).toHaveValue('premium')
@@ -158,9 +160,9 @@ it('confirms a keyboard choice before Enter submits the selected group', async (
   const router = await renderFilter()
   const input = screen.getByRole('combobox', { name: 'Group' })
   await userEvent.click(input)
-  await screen.findByRole('option', { name: 'default' })
+  await screen.findByRole('option', { name: 'General writing' })
   await userEvent.keyboard('{ArrowDown}{Enter}')
-  expect(input).toHaveValue('default')
+  expect(input).toHaveValue('General writing')
   expect(input).toHaveAttribute('aria-expanded', 'false')
   expect(router.state.location.search).not.toHaveProperty('group')
   await userEvent.keyboard('{Enter}')
@@ -210,7 +212,9 @@ it('keeps a selected group visible on focus and can clear it without choosing an
   const input = screen.getByRole('combobox', { name: 'Group' })
   await userEvent.click(input)
   expect(input).toHaveValue('premium')
-  expect(await screen.findByRole('option', { name: 'default' })).toBeVisible()
+  expect(
+    await screen.findByRole('option', { name: 'General writing' })
+  ).toBeVisible()
   await userEvent.clear(input)
   await userEvent.keyboard('{Enter}')
   await waitFor(() =>

@@ -23,6 +23,7 @@ import { Eye, EyeOff } from 'lucide-react'
 import { useState, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { formatUserGroupName } from '@/components/model-group-selector/group-detail'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Combobox } from '@/components/ui/combobox'
@@ -143,8 +144,8 @@ export function CommonLogsFilterBar<TData>(
       : Object.keys(userGroups?.data ?? {})
     return groups
       .filter((group) => group !== 'auto')
-      .map((group) => ({ label: group, value: group }))
-  }, [isAdmin, adminGroups, userGroups])
+      .map((group) => ({ label: formatUserGroupName(group, t), value: group }))
+  }, [isAdmin, adminGroups, userGroups, t])
 
   const searchState = useMemo<CommonLogDraft>(() => {
     const { start, end } = getDefaultTimeRange()
