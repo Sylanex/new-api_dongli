@@ -28,6 +28,7 @@ import { getUserAvatarFallback, getUserAvatarStyle } from '@/lib/avatar'
 import { formatCumulativeQuota } from '@/lib/currency'
 import { formatCompactNumber, formatQuota } from '@/lib/format'
 import { getRoleLabel } from '@/lib/roles'
+import { useSystemConfigStore } from '@/stores/system-config-store'
 
 import { getDisplayName } from '../lib'
 import type { UserProfile } from '../types'
@@ -43,6 +44,7 @@ interface ProfileHeaderProps {
 
 export function ProfileHeader({ profile, loading }: ProfileHeaderProps) {
   const { t } = useTranslation()
+  useSystemConfigStore((state) => state.config.currency)
 
   if (loading) {
     return (

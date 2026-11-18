@@ -141,6 +141,26 @@ function legacyUsageInCurrentQuota(quota: number, legacyUnit: number): number {
   )
 }
 
+// Dashboard queries cache display values. Refresh them when a newly loaded
+// site configuration changes how their original quota should be interpreted.
+export function useUsageUnitCacheKey(): string {
+  return useSystemConfigStore(({ config }) => {
+    const migration = config.pointsMigration
+    if (
+      !migration ||
+      migration.cutoverTime <= 0 ||
+      migration.cutoverTime > Date.now() / 1000
+    ) {
+      return ''
+    }
+    return [
+      migration.cutoverTime,
+      migration.legacyQuotaPerUnit,
+      config.currency.quotaPerUnit,
+    ].join('/')
+  })
+}
+
 // Convert each dated chart bucket before aggregating it with other buckets.
 export function getChartQuota(quota: number, recordedAt: number): number {
   const legacyUnit = getLegacyRecordUnit(recordedAt)

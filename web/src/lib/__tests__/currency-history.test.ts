@@ -1,3 +1,4 @@
+import { act, renderHook } from '@testing-library/react'
 /*
 Copyright (C) 2023-2026 QuantumNous
 
@@ -30,6 +31,7 @@ import {
   formatCumulativeQuota,
   getCumulativeDisplayQuota,
   getChartQuota,
+  useUsageUnitCacheKey,
 } from '@/lib/currency'
 import { formatLogQuota } from '@/lib/format'
 import { mapStatusDataToConfig } from '@/lib/status-query'
@@ -139,4 +141,24 @@ test('dated buckets add up to the same points as the wallet across the cutover',
   })
   expect(getChartQuota(5000000, cutoverTime - 1)).toBe(5000000)
   expect(formatCumulativeQuota(7000000, 5000000)).toBe('点 7')
+})
+
+test('cached dashboard data is refreshed when the site loads new usage units', () => {
+  const store = useSystemConfigStore.getState()
+  store.setConfig({ pointsMigration: undefined })
+  const { result } = renderHook(useUsageUnitCacheKey)
+  const oldKey = result.current
+  act(() =>
+    store.setConfig({
+      pointsMigration: { cutoverTime, legacyQuotaPerUnit: 500000 },
+    })
+  )
+  expect(result.current).not.toBe(oldKey)
+  const pointsKey = result.current
+  act(() =>
+    store.setConfig({
+      currency: { ...store.config.currency, quotaPerUnit: 2000000 },
+    })
+  )
+  expect(result.current).not.toBe(pointsKey)
 })

@@ -25,6 +25,7 @@ import { Label } from '@/components/ui/label'
 import { formatCumulativeQuota } from '@/lib/currency'
 import { formatQuota, formatCompactNumber } from '@/lib/format'
 import { handleServerError } from '@/lib/handle-server-error'
+import { useSystemConfigStore } from '@/stores/system-config-store'
 
 import { getUserInfo } from '../../api'
 import type { UserInfo } from '../../types'
@@ -50,6 +51,7 @@ export function UserInfoDialog({
   onOpenChange,
 }: UserInfoDialogProps) {
   const { t } = useTranslation()
+  useSystemConfigStore((state) => state.config.currency)
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 

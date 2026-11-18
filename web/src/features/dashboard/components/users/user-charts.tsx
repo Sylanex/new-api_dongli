@@ -40,6 +40,7 @@ import type {
   ProcessedUserChartData,
   UserChartsFilters,
 } from '@/features/dashboard/types'
+import { useUsageUnitCacheKey } from '@/lib/currency'
 import { requireServerSuccess } from '@/lib/server-error-message'
 import { getRollingDateRange, type TimeGranularity } from '@/lib/time'
 import { VCHART_OPTION } from '@/lib/vchart'
@@ -73,6 +74,7 @@ interface UserChartsProps {
 }
 
 export function UserCharts(props: UserChartsProps) {
+  const unitKey = useUsageUnitCacheKey()
   const { t } = useTranslation()
   const { resolvedTheme } = useTheme()
   const [themeReady, setThemeReady] = useState(false)
@@ -138,7 +140,7 @@ export function UserCharts(props: UserChartsProps) {
   }, [resolvedTheme])
 
   const { data: userData, isLoading } = useQuery({
-    queryKey: ['dashboard', 'user-quota', timeRange],
+    queryKey: ['dashboard', 'user-quota', timeRange, unitKey],
     queryFn: async () =>
       requireServerSuccess(await getUserQuotaDataByUsers(timeRange)),
     select: (res) => (res.success ? res.data : []),
