@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"gorm.io/gorm"
 )
 
@@ -82,8 +83,11 @@ func logQuotaDataCache(quotaData *QuotaData) {
 }
 
 func LogQuotaData(params QuotaDataLogParams) {
-	// 只精确到小时
+	// Keep both units separate if the migration occurs inside an hourly bucket.
 	createdAt := params.CreatedAt - (params.CreatedAt % 3600)
+	if cutover := operation_setting.ActivePointsCutoverTime(); cutover > createdAt && params.CreatedAt >= cutover {
+		createdAt = cutover
+	}
 	quotaData := &QuotaData{
 		UserID:              params.UserID,
 		Username:            params.Username,

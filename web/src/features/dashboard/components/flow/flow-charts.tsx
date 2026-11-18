@@ -84,6 +84,7 @@ import type {
   FlowOverflowMode,
   FlowRole,
 } from '@/features/dashboard/types'
+import { useUsageUnitCacheKey } from '@/lib/currency'
 import { formatQuota } from '@/lib/format'
 import { ROLE } from '@/lib/roles'
 import { requireServerSuccess } from '@/lib/server-error-message'
@@ -255,6 +256,7 @@ function formatFlowMetricNumber(value: number): string {
 }
 
 export function FlowCharts(props: FlowChartsProps) {
+  const unitKey = useUsageUnitCacheKey()
   const { t } = useTranslation()
   const { resolvedTheme, themeReady } = useChartTheme()
   const textColor = useThemeColor('--foreground')
@@ -338,7 +340,7 @@ export function FlowCharts(props: FlowChartsProps) {
     isError,
     isLoading,
   } = useQuery({
-    queryKey: ['dashboard', 'flow', flowQueryParams, flowRole],
+    queryKey: ['dashboard', 'flow', flowQueryParams, flowRole, unitKey],
     queryFn: async () =>
       requireServerSuccess(await getFlowQuotaDates(flowQueryParams, isAdmin)),
     select: (res) =>

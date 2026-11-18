@@ -526,7 +526,7 @@ it('keeps mobile quota readable and opens complete model and IP restrictions by 
   expect(within(details).getByText('2001:db8::1')).toBeVisible()
 })
 
-it('calculates a migrated key percentage from current usage and remaining points', () => {
+it('calculates a migrated key percentage from lifetime usage and remaining points', () => {
   useSystemConfigStore.getState().setConfig({
     currency: {
       ...DEFAULT_CURRENCY_CONFIG,
@@ -541,6 +541,8 @@ it('calculates a migrated key percentage from current usage and remaining points
     used_quota: 1000000,
     legacy_used_quota: 500000,
   })
-  expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '50')
-  expect(screen.getByText('1 · Legacy credits 1')).toBeVisible()
+  expect(
+    Number(screen.getByRole('progressbar').getAttribute('aria-valuenow'))
+  ).toBeCloseTo(100 / 9.3)
+  expect(screen.getByText('8.3')).toBeVisible()
 })

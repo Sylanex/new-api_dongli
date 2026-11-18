@@ -133,7 +133,7 @@ afterEach(() => {
   useSystemConfigStore.setState(useSystemConfigStore.getInitialState(), true)
 })
 
-it('places pre-migration usage in the secondary line and keeps point units after the main values', () => {
+it('shows cumulative usage in points and keeps the unit after the main value', () => {
   useSystemConfigStore.getState().setConfig(
     mapStatusDataToConfig({
       quota_display_type: 'CUSTOM',
@@ -149,7 +149,7 @@ it('places pre-migration usage in the secondary line and keeps point units after
     username: 'demo',
     group: 'default',
     quota: 57330000,
-    used_quota: 2500000,
+    used_quota: 7000000,
     legacy_used_quota: 500000,
     request_count: 2,
     aff_quota: 0,
@@ -161,20 +161,20 @@ it('places pre-migration usage in the secondary line and keeps point units after
       <WalletStatsCard user={{ ...user, legacy_used_quota: legacy }} />
     </I18nextProvider>
   )
-  const { rerender } = render(card(500000))
-  expect(screen.getByText('切换后用量')).toBeVisible()
+  const { rerender } = render(card(5000000))
+  expect(screen.getByText('总用量')).toBeVisible()
   const amounts = screen
     .getAllByRole('definition')
     .map((node) => node.textContent)
-  expect(amounts).toContain('2 点')
+  expect(amounts).toContain('75 点')
   expect(amounts).toContain('57.33 点')
-  expect(screen.getByText('切换前已用 1 旧额度')).toBeVisible()
+  expect(screen.queryByText(/切换前已用/)).toBeNull()
   rerender(card(0))
   expect(screen.queryByText(/切换前已用/)).toBeNull()
   expect(
     screen.getAllByRole('definition').map((node) => node.textContent)
-  ).toContain('2.5 点')
+  ).toContain('7 点')
   rerender(card(null))
-  expect(screen.getByText(/2,500,000/)).toBeVisible()
+  expect(screen.getByText(/7,000,000/)).toBeVisible()
   expect(screen.queryByText('切换后用量')).toBeNull()
 })

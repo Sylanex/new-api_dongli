@@ -30,6 +30,7 @@ import type { QuotaDataItem } from '@/features/dashboard/types'
 import { useStatus } from '@/hooks/use-status'
 import {
   formatCumulativeQuota,
+  useUsageUnitCacheKey,
   getCurrencyLabel,
   isCurrencyDisplayEnabled,
 } from '@/lib/currency'
@@ -142,6 +143,7 @@ const HEALTH_CONFIG: Record<
 }
 
 export function SummaryCards() {
+  const unitKey = useUsageUnitCacheKey()
   const { t } = useTranslation()
   const user = useAuthStore((state) => state.auth.user)
   const { status, loading } = useStatus()
@@ -156,6 +158,7 @@ export function SummaryCards() {
       'dashboard',
       'overview',
       'summary-sparklines',
+      unitKey,
       summaryTimeRange.start_timestamp,
       summaryTimeRange.end_timestamp,
     ],

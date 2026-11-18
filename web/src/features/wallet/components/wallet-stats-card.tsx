@@ -24,9 +24,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import {
   formatCumulativeQuota,
   formatQuotaWithCurrency,
-  getCurrentUsedQuota,
+  getCumulativeDisplayQuota,
 } from '@/lib/currency'
-import { cn } from '@/lib/utils'
 import { useSystemConfigStore } from '@/stores/system-config-store'
 
 import type { UserWalletData } from '../types'
@@ -62,14 +61,12 @@ export function WalletStatsCard(props: WalletStatsCardProps) {
   const quotaOptions = { showSymbol: !unit }
   const total = props.user?.used_quota ?? 0
   const legacy = props.user?.legacy_used_quota
-  const current = getCurrentUsedQuota(total, legacy)
-  const hasHistory = current != null && current !== total && legacy != null
+  const displayQuota = getCumulativeDisplayQuota(total, legacy)
 
   const stats: {
     label: string
     value: string
     unit?: string
-    showDescriptionOnMobile?: boolean
     description: string
     icon: typeof WalletCards
     tone: IconBadgeTone
@@ -83,21 +80,13 @@ export function WalletStatsCard(props: WalletStatsCardProps) {
       tone: 'success',
     },
     {
-      label: hasHistory ? t('Usage since migration') : t('Total Usage'),
+      label: t('Total Usage'),
       value:
-        current == null
+        displayQuota == null
           ? formatCumulativeQuota(total, legacy)
-          : formatQuotaWithCurrency(current, quotaOptions),
-      unit: current == null ? undefined : unit,
-      description: hasHistory
-        ? t('Previously used {{amount}} legacy credits', {
-            amount: formatQuotaWithCurrency(legacy, {
-              recordedAt: 0,
-              showSymbol: false,
-            }),
-          })
-        : t('Total consumed quota'),
-      showDescriptionOnMobile: hasHistory,
+          : formatQuotaWithCurrency(displayQuota, quotaOptions),
+      unit: displayQuota == null ? undefined : unit,
+      description: t('Total consumed quota'),
       icon: BarChart3,
       tone: 'info',
     },
@@ -126,18 +115,13 @@ export function WalletStatsCard(props: WalletStatsCardProps) {
           <dd className='text-foreground mt-1.5 text-sm font-semibold tracking-tight break-all tabular-nums sm:mt-2.5 sm:text-2xl'>
             {item.value}
             {item.unit && (
-              <span className='text-muted-foreground whitespace-nowrap font-sans text-xs font-medium tracking-normal sm:text-sm'>
+              <span className='text-muted-foreground font-sans text-xs font-medium tracking-normal whitespace-nowrap sm:text-sm'>
                 {' '}
                 {item.unit}
               </span>
             )}
           </dd>
-          <dd
-            className={cn(
-              'text-muted-foreground mt-1 text-xs leading-snug',
-              !item.showDescriptionOnMobile && 'hidden md:block'
-            )}
-          >
+          <dd className='text-muted-foreground mt-1 hidden text-xs leading-snug md:block'>
             {item.description}
           </dd>
         </div>

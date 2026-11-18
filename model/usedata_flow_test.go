@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/stretchr/testify/require"
 )
 
@@ -190,4 +191,37 @@ func TestLogQuotaDataSplitsRowsByUseGroupTokenChannelAndNode(t *testing.T) {
 	require.Equal(t, 60, rows[0].TokenUsed)
 	require.Equal(t, "default", rows[1].UseGroup)
 	require.Equal(t, 25, rows[1].Quota)
+}
+
+func TestDashboardUsageAcrossPointsCutover(t *testing.T) {
+	truncateTables(t)
+	migration := operation_setting.GetPointsMigrationSetting()
+	previous := *migration
+	t.Cleanup(func() { *migration = previous })
+	const boundary int64 = 3900
+	migration.CutoverTime = boundary
+
+	for _, event := range []struct {
+		at    int64
+		quota int
+	}{{boundary - 1, 5000000}, {boundary, 1500000}, {boundary + 1, 500000}} {
+		LogQuotaData(QuotaDataLogParams{CreatedAt: event.at, UserID: 1, UseGroup: "default", ModelName: "demo", Quota: event.quota, TokenUsed: 30})
+	}
+	SaveQuotaDataCache()
+	var rows []QuotaData
+	require.NoError(t, DB.Order("created_at ASC").Find(&rows).Error)
+	require.Len(t, rows, 2)
+	require.Equal(t, int64(3600), rows[0].CreatedAt)
+	require.Equal(t, 5000000, rows[0].Quota)
+	require.Equal(t, boundary, rows[1].CreatedAt)
+	require.Equal(t, 2000000, rows[1].Quota)
+	for _, role := range []int{common.RoleCommonUser, common.RoleAdminUser, common.RoleRootUser} {
+		flow, err := GetFlowQuotaData(3600, 7200, "", 1, role)
+		require.NoError(t, err)
+		require.Len(t, flow, 1)
+		require.Equal(t, 7000000, flow[0].Quota)
+		require.Equal(t, 5000000, flow[0].LegacyQuota)
+		require.Equal(t, 3, flow[0].Count)
+		require.Equal(t, 90, flow[0].TokenUsed)
+	}
 }

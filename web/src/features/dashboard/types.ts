@@ -36,6 +36,7 @@ export interface QuotaDataItem {
 }
 
 export interface FlowQuotaDataItem {
+  legacy_quota?: number
   user_id?: number
   username?: string
   node_name?: string

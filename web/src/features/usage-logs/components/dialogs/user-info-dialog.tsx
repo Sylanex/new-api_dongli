@@ -22,8 +22,10 @@ import { useTranslation } from 'react-i18next'
 
 import { Dialog } from '@/components/dialog'
 import { Label } from '@/components/ui/label'
+import { formatCumulativeQuota } from '@/lib/currency'
 import { formatQuota, formatCompactNumber } from '@/lib/format'
 import { handleServerError } from '@/lib/handle-server-error'
+import { useSystemConfigStore } from '@/stores/system-config-store'
 
 import { getUserInfo } from '../../api'
 import type { UserInfo } from '../../types'
@@ -49,6 +51,7 @@ export function UserInfoDialog({
   onOpenChange,
 }: UserInfoDialogProps) {
   const { t } = useTranslation()
+  useSystemConfigStore((state) => state.config.currency)
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -115,7 +118,10 @@ export function UserInfoDialog({
             />
             <InfoItem
               label={t('Used Quota')}
-              value={formatQuota(userInfo.used_quota)}
+              value={formatCumulativeQuota(
+                userInfo.used_quota,
+                userInfo.legacy_used_quota
+              )}
             />
           </div>
 
